@@ -5,10 +5,20 @@ import (
   _ "github.com/go-sql-driver/mysql"
   "time"
   "log"
+  "os"
 )
 
 func main() {
-  db, err := sql.Open("mysql", upaswd + "@tcp(gz-cdb-nvmjxb1y.sql.tencentcdb.com:62823)/information_schema?charset=utf8")
+  if len(os.Args) > 2 {
+    return
+  }
+  
+  var mode string = "client"
+  if len(os.Args) > 1 {
+    mode = os.Args[1]
+  }
+  
+  db, err := sql.Open("mysql", "user:123456@tcp(gz-cdb-nvmjxb1y.sql.tencentcdb.com:62823)/test?charset=utf8")
   if err != nil {
     panic(err.Error())
   }
@@ -22,23 +32,37 @@ func main() {
   if err != nil {
     panic(err.Error())
   }
-
-  rows, err := db.Query("select substring_index(host,':',1) as ip , count(*) from information_schema.processlist group by ip");
+  
+  if mode == "server" {
+    stmtIns, err := db.Query("insert into test.lookup(ip) SELECT SUBSTRING_INDEX(USER(), '@', -1) AS ip")
+    if err != nil {
+      panic(err.Error())
+    }
+    
+    defer stmtIns.Close()
+    
+    stmtDel, err := db.Query("DELETE FROM a USING test.lookup a INNER JOIN test.lookup b WHERE a.ip = b.ip AND a.id > b.id OR a.createTime < NOW() - INTERVAL 24 hour")
+    if err != nil {
+      panic(err.Error())
+    }
+    
+    defer stmtDel.Close()
+  }
+  
+  rows, err := db.Query("select distinct ip from test.lookup order by createTime desc")
   if err != nil {
     panic(err.Error())
   }
   
-  defer rows.Close()
   var ip string
-  var count int
   for rows.Next() {
-    err := rows.Scan(&ip, &count)
+    err := rows.Scan(&ip)
     if err != nil {
       panic(err.Error())
     }
     
     if ip != "" {
-      log.Println(ip, count)
+      log.Println(ip)
     }
   }
   
@@ -47,4 +71,3 @@ func main() {
     panic(err.Error())
   }
 }
-
