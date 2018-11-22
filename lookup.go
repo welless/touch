@@ -41,7 +41,7 @@ func main() {
     
     defer stmtIns.Close()
     
-    stmtDel, err := db.Query("DELETE FROM a USING test.lookup a INNER JOIN test.lookup b WHERE a.ip = b.ip AND a.id > b.id OR a.createTime < NOW() - INTERVAL 24 hour")
+    stmtDel, err := db.Query("DELETE FROM a USING test.lookup a INNER JOIN test.lookup b WHERE a.ip = b.ip AND a.id < b.id OR a.createTime < NOW() - INTERVAL 24 hour")
     if err != nil {
       panic(err.Error())
     }
@@ -49,20 +49,21 @@ func main() {
     defer stmtDel.Close()
   }
   
-  rows, err := db.Query("select distinct ip from test.lookup order by createTime desc")
+  rows, err := db.Query("select ip, max(createTime) ct from test.lookup group by ip order by createTime desc")
   if err != nil {
     panic(err.Error())
   }
   
   var ip string
+  var ct string
   for rows.Next() {
-    err := rows.Scan(&ip)
+    err := rows.Scan(&ip, &ct)
     if err != nil {
       panic(err.Error())
     }
     
     if ip != "" {
-      log.Println(ip)
+      log.Println(ct, ip)
     }
   }
   
