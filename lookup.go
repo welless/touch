@@ -24,9 +24,9 @@ func main() {
   }
   defer db.Close()
 
-  db.SetMaxOpenConns(10)
-  db.SetMaxIdleConns(5)   
-  db.SetConnMaxLifetime(8*60*time.Second)   
+  db.SetMaxOpenConns(3)
+  db.SetMaxIdleConns(2)
+  db.SetConnMaxLifetime(60*time.Second)
 
   err = db.Ping()
   if err != nil {
@@ -41,7 +41,7 @@ func main() {
     
     defer stmtIns.Close()
     
-    stmtDel, err := db.Query("DELETE FROM a USING test.lookup a INNER JOIN test.lookup b WHERE a.ip = b.ip AND a.id < b.id OR a.createTime < NOW() - INTERVAL 24 hour")
+    stmtDel, err := db.Query("DELETE FROM a USING test.lookup a INNER JOIN test.lookup b WHERE a.ip = b.ip AND a.id < b.id OR a.createTime < NOW() - INTERVAL 12 hour")
     if err != nil {
       panic(err.Error())
     }
