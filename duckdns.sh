@@ -1,8 +1,8 @@
 #!/bin/sh
 
-if [ ! -e /tmp/dnsip.txt ] ; then
+#if [ ! -e /tmp/dnsip.txt ] ; then
     ping npe.duckdns.org -c1 | grep PING | awk '{ print $3 }' | sed 's/[()]//g' > /tmp/dnsip.txt
-fi
+#fi
 
 mydnsip=$(head -1 /tmp/dnsip.txt)
 token=xxxx
